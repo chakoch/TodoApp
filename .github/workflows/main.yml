@@ -42,7 +42,7 @@ jobs:
       run: dotnet publish BlazorApp --no-build --configuration Release --output ./dist/blazorapp
     
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: published-apps
         path: ./dist/
