@@ -1,10 +1,10 @@
-name: Student CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ master ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ master ]
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -47,7 +47,6 @@ jobs:
         name: published-apps
         path: ./dist/
 
-
   docker-test:
     name: Docker Build Test
     runs-on: ubuntu-latest
@@ -76,7 +75,6 @@ jobs:
         push: false
         tags: todoapp-blazorapp:test
 
-
   code-quality:
     name: Code Quality Check
     runs-on: ubuntu-latest
@@ -95,7 +93,6 @@ jobs:
     
     - name: Check code formatting
       run: dotnet format --verify-no-changes --verbosity normal
-
 
   security-check:
     name: Security Scan
