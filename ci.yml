@@ -33,3 +33,4 @@ jobs:
 
       - name: Docker build Blazor
         run: docker build -t securebooker-client ./BlazorApp
+
