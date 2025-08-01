@@ -24,10 +24,10 @@ resource "google_project_service" "enabled" {
 }
 
 resource "google_artifact_registry_repository" "app_repo" {
-	location = var.region
+	location      = var.region
 	repository_id = "todoapp"
-	format = "DOCKER"
-	description = "Docker repo for Todo App"
+	format        = "DOCKER"
+	description   = "Docker repo for Todo App"
 }
 
 resource "google_cloud_run_service" "api" {
@@ -37,7 +37,7 @@ resource "google_cloud_run_service" "api" {
   template {
     spec {
       containers {
-        image = "REGION-docker.pkg.dev/${var.project_id}/todoapp/todoapp-api"
+        image = "${var.region}-docker.pkg.dev/${var.project_id}/todoapp/todoapp-api"
         ports {
           container_port = 80
         }
@@ -46,43 +46,46 @@ resource "google_cloud_run_service" "api" {
   }
 
   traffic {
-	percent         = 100
-	latest_revision = true
+    percent         = 100
+    latest_revision = true
   }
 
-    autogenerate_revision_name = true
+  autogenerate_revision_name = true
 }
 
 resource "google_cloud_run_service" "web" {
   name     = "todoapp-web"
   location = var.region
+  
   template {
-	spec {
-	  containers {
-		image = "REGION-docker.pkg.dev/${var.project_id}/todoapp/todoapp-web"
-		ports {
-		  container_port = 80
-		}
-	  }
-	}
+    spec {
+      containers {
+        image = "${var.region}-docker.pkg.dev/${var.project_id}/todoapp/todoapp-web"
+        ports {
+          container_port = 80
+        }
+      }
+    }
   }
+  
   traffic {
-	percent         = 100
-	latest_revision = true
+    percent         = 100
+    latest_revision = true
   }
-	autogenerate_revision_name = true
+  
+  autogenerate_revision_name = true
 }
 
 resource "google_cloud_run_service_iam_member" "web_invoker" {
-  service = google_cloud_run_service.web.name
+  service  = google_cloud_run_service.web.name
   location = var.region
-  role    = "roles/run.invoker"
-  member  = "allUsers"
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }
 
 resource "google_cloud_run_service_iam_member" "api_invoker" {
-  service = google_cloud_run_service.api.name
+  service  = google_cloud_run_service.api.name
   location = var.region
-  role    = "roles/run.invoker"
-  member  = "allUsers"
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }
