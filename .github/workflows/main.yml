@@ -1,0 +1,110 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build solution
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Build WebAPI
+      run: dotnet build WebApi --no-restore --configuration Release
+    
+    - name: Build Blazor App
+      run: dotnet build BlazorApp --no-restore --configuration Release
+    
+    - name: Publish WebAPI (test)
+      run: dotnet publish WebApi --no-build --configuration Release --output ./dist/webapi
+    
+    - name: Publish Blazor App (test)
+      run: dotnet publish BlazorApp --no-build --configuration Release --output ./dist/blazorapp
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: published-apps
+        path: ./dist/
+
+  docker-test:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    needs: build-test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Test build WebAPI Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./WebApi/Dockerfile
+        push: false
+        tags: todoapp-webapi:test
+    
+    - name: Test build Blazor App Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./BlazorApp
+        file: ./BlazorApp/Dockerfile
+        push: false
+        tags: todoapp-blazorapp:test
+
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Check code formatting
+      run: dotnet format --verify-no-changes --verbosity normal
+
+  security-check:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'table'
